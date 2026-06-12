@@ -1,10 +1,10 @@
-# RecallPro
+## RecallPro
 
 Personal spaced repetition without cards. You log *what* you learned (a title,
 optionally with a checklist of subpoints) — never the content. RecallPro reminds
 you when to revise it; the actual revision happens in your own notes.
 
-## About / how it works
+### About
 
 | Piece | Role |
 |---|---|
@@ -21,33 +21,30 @@ daemon picks that up, advances the ladder, and counts the next interval from
 the *completion* date. Unchecked tasks roll forward to today, every day, until
 done. If the Mac sleeps, everything catches up on the next wake.
 
-## Requirements
+---
+
+### Requirements
 
 - macOS (the daemon uses `launchd` and `osascript`)
 - Python 3.10+
 - A Google account (for Google Tasks / Calendar integration)
 
-## Install
+### Install & Setup
 
 ```sh
+# install
 git clone https://github.com/<your-username>/recall-pro.git
 cd recall-pro
 python3 -m venv .venv
 .venv/bin/pip install -e .
-```
 
-### Put `recallpro` on your PATH
+# add to path
+ln -s "$PWD/.venv/bin/recallpro" ~/.local/bin/recallpro   
 
-```sh
-ln -s "$PWD/.venv/bin/recallpro" ~/.local/bin/recallpro   # or any dir already on PATH
-```
+# create alias (~/.bashrc)
+alias r='recallpro'
 
-If you later move or rename the project directory, recreate the venv and
-symlink and re-run `recallpro setup` — they all embed absolute paths.
-
-### Connect Google + install the daemon
-
-```sh
+# setup
 recallpro setup
 ```
 
@@ -59,7 +56,22 @@ re-run `recallpro setup` — it opens the browser consent flow, creates the
 "Revisions" task list, and installs + loads the launchd agent. Idempotent;
 re-run it anytime something looks broken.
 
-## Daemon management (launchd)
+Note: If you later move or rename the project directory, recreate the venv and
+symlink and re-run `recallpro setup` — they all embed absolute paths.
+
+### Uninstall
+
+```sh
+launchctl unload ~/Library/LaunchAgents/com.recallpro.agent.plist
+rm ~/Library/LaunchAgents/com.recallpro.agent.plist
+rm -rf ~/.recallpro          # deletes all items + auth — back up first if unsure
+rm ~/.local/bin/recallpro    # the PATH symlink, if you made one
+rm -rf .venv                 # or delete the whole project directory
+```
+
+---
+
+### Daemon management (launchd)
 
 The agent lives at `~/Library/LaunchAgents/com.recallpro.agent.plist`.
 
@@ -80,29 +92,22 @@ recallpro status
 tail -f ~/.recallpro/daemon.log
 ```
 
-## Uninstall
 
-```sh
-launchctl unload ~/Library/LaunchAgents/com.recallpro.agent.plist
-rm ~/Library/LaunchAgents/com.recallpro.agent.plist
-rm -rf ~/.recallpro          # deletes all items + auth — back up first if unsure
-rm ~/.local/bin/recallpro    # the PATH symlink, if you made one
-rm -rf .venv                 # or delete the whole project directory
-```
-
-## Cheat sheet
+### Usage
 
 ```text
-recallpro                      capture window (multiple items per session)
-recallpro TCP/IP stack         one-shot capture, no quotes needed
-recallpro <title> --on DATE    backdate: YYYY-MM-DD, 'yesterday', 'today'
-recallpro due [--full]         what's due today (--full shows subpoints)
-recallpro ls                   all items with rung and next due date
-recallpro edit <id|text>       edit title/subpoints in the editor
-recallpro delete <id…|text>    remove item(s), no confirmation — e.g. delete 3 5 7
-recallpro sync                 force a sync cycle right now
-recallpro status               daemon / sync / auth health
-recallpro help                 usage
+recallpro                     open the capture window (title + subpoints)
+recallpro <title words>       one-shot capture, learned today
+recallpro <title> --on DATE   backdate (YYYY-MM-DD, 'yesterday', or 'today')
+
+recallpro ls [--due] [--full] all items (--due: only due today; --full: subpoints)
+recallpro edit <id|text>      edit an item's title/subpoints in the editor
+recallpro del <id…|text>      permanently delete item(s) — several ids allowed
+
+recallpro setup               Google OAuth + task list + launchd install
+recallpro status              daemon and sync health
+recallpro sync                run a full sync cycle right now
+recallpro help                this message
 ```
 
 Capture window:

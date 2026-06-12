@@ -55,7 +55,7 @@ def test_delete_accepts_multiple_ids(monkeypatch, tmp_path):
     a = db.add_item(conn, "a", TODAY)
     b = db.add_item(conn, "b", TODAY)
     c = db.add_item(conn, "c", TODAY)
-    assert cli.main(["delete", str(a), str(c)]) == 0
+    assert cli.main(["del", str(a), str(c)]) == 0
     assert [i["id"] for i in db.list_items(conn)] == [b]
 
 
@@ -64,7 +64,7 @@ def test_delete_missing_id_reports_but_deletes_rest(monkeypatch, tmp_path):
     conn = db.connect(tmp_path / "t.db")
     monkeypatch.setattr(cli.db, "connect", lambda: conn)
     a = db.add_item(conn, "a", TODAY)
-    assert cli.main(["delete", str(a), "999"]) == 1
+    assert cli.main(["del", str(a), "999"]) == 1
     assert db.list_items(conn) == []
 
 

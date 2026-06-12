@@ -57,7 +57,7 @@ Each item carries exactly two pieces of information at capture time:
 **Guiding principle:** minimum keystrokes. Capture is the default action; item
 lookups never require exact titles or quotes.
 
-**Item referencing convention (applies to `edit` and `delete`):** an item
+**Item referencing convention (applies to `edit` and `del`):** an item
 argument is either a numeric id or a
 case-insensitive substring of the title. Unique match → act immediately.
 Ambiguous match → numbered list, pick by number. No match → error listing
@@ -67,7 +67,7 @@ nearest titles.
 
 An item is a **title plus an optional outline of subpoints** (arbitrarily
 nested bullets) — a syllabus breakdown acting as a revision checklist, *not*
-card content. Subpoints are display-only: they appear in `recallpro due`
+card content. Subpoints are display-only: they appear in `recallpro ls`
 (`--full`), in the capture/edit window, and rendered as an indented checklist
 in the Google Task's **notes field** (the Tasks API supports only one level of
 subtasks, so notes-field rendering is used instead of real subtasks).
@@ -81,7 +81,7 @@ Completion remains a single checkbox per item.
 | `recallpro TCP/IP stack` | One-shot capture; all args joined into the title — no quotes needed. Title only (no subpoints in one-shot mode). Learned today; first revision due tomorrow. |
 | `recallpro <title> --on 2026-06-10` / `--on yesterday` | Backdated capture; schedule computed from that date. If the computed first due date is already past → due today. |
 
-Titles starting with a reserved word (`due, ls, edit, delete, setup,
+Titles starting with a reserved word (`ls, edit, del, setup,
 status, sync, help`) can't be captured one-shot — use the capture window,
 where every line is plain text.
 
@@ -101,14 +101,13 @@ same free-text editing model as the edit window:
   saved on exit, so no exit path can lose typed text.
 - Any characters are valid (quotes, apostrophes, slashes) — the shell never
   parses this text. Duplicate titles are added anyway with a visible
-  "duplicate of #N" warning (fix with `recallpro delete` or `recallpro edit`).
+  "duplicate of #N" warning (fix with `recallpro del` or `recallpro edit`).
 
 #### Review
 
 | Command | Behavior |
 |---|---|
-| `recallpro due` | Items due today, incl. rolled-over ones (shown with "3d overdue"), with id and rung. `--full` includes each item's subpoint outline. |
-| `recallpro ls` | All active items: id, title, rung, next due date. |
+| `recallpro ls` | All active items: id, title, rung, next due date. `--due` restricts to items due today, incl. rolled-over ones (shown with "3d overdue"). `--full` includes each item's subpoint outline. |
 
 #### Completion
 
@@ -127,7 +126,7 @@ schedules the next one. There is no CLI completion command. Consequences:
 | Command | Behavior |
 |---|---|
 | `recallpro edit <item>` | Reopens the item (title + subpoints) in the outline editor — covers both renaming and revising the breakdown. Synced Google Task updates on next sync. |
-| `recallpro delete <item>` | Hard delete, no confirmation — the only way to stop an item (no archive). History removed; its Google Task is removed. Accepts several space-separated ids (`delete 3 5 7`); if every arg is numeric they're treated as ids, otherwise the args are one title substring. |
+| `recallpro del <item>` | Hard delete, no confirmation — the only way to stop an item (no archive). History removed; its Google Task is removed. Accepts several space-separated ids (`del 3 5 7`); if every arg is numeric they're treated as ids, otherwise the args are one title substring. |
 
 #### System
 
@@ -140,7 +139,7 @@ schedules the next one. There is no CLI completion command. Consequences:
 
 CLI writes to SQLite directly — capture must succeed even if the daemon is down
 or the Mac is offline; the daemon reconciles Google Tasks on its next cycle
-(every ~15 min). Commands with sync-visible effects (`edit`, `delete`) trigger
+(every ~15 min). Commands with sync-visible effects (`edit`, `del`) trigger
 an opportunistic immediate sync but never fail if it's unavailable.
 
 ### 2. Daemon (sync + notify loop)
@@ -185,8 +184,8 @@ for rung ≤ 6, else `120 * 2^(rung-6)`.
 ## Edge Cases & Conflict Rules
 
 - **Task deleted by hand in Google Tasks** (not checked off) → daemon recreates it
-  next cycle; deletion is not completion. Use `recallpro delete` to stop an item.
-- **Duplicate titles** → allowed, but the CLI warns; `edit`/`delete` on an
+  next cycle; deletion is not completion. Use `recallpro del` to stop an item.
+- **Duplicate titles** → allowed, but the CLI warns; `edit`/`del` on an
   ambiguous title shows a numbered picker.
 - **Completion seen twice** (e.g. task checked, daemon crashes mid-cycle,
   reprocessed next cycle) → idempotent: a revision per item per due date counts
@@ -219,9 +218,10 @@ for rung ≤ 6, else `120 * 2^(rung-6)`.
   Enter finalizes the item) for simplicity and to avoid dead screen space.
 - Items have nested subpoints (revision checklist, not card content), rendered
   into the Google Task notes field; completion stays one checkbox per item.
-- Command set kept minimal: `due, ls, edit, delete, setup, status, sync,
-  help` + default capture (`list` renamed to `ls`). Removed: `done, undo, archive, restore, rename,
-  log, add`. `edit` (outline editor) covers renaming; `delete` is the only
+- Command set kept minimal: `ls, edit, del, setup, status, sync,
+  help` + default capture (`list` renamed to `ls`, `delete` to `del`, `due`
+  folded into `ls --due`). Removed: `done, undo, archive, restore, rename,
+  log, add`. `edit` (outline editor) covers renaming; `del` is the only
   way to stop an item. (`sync` was removed, then re-added same day.)
 
 ## Setup Prerequisites (one-time)

@@ -10,7 +10,7 @@ from datetime import date, timedelta
 
 from . import db, scheduler
 
-RESERVED = {"due", "ls", "edit", "delete", "setup", "status", "sync", "help"}
+RESERVED = {"ls", "edit", "del", "setup", "status", "sync", "help"}
 
 USAGE = """\
 recallpro — personal spaced repetition reminder
@@ -19,10 +19,9 @@ recallpro — personal spaced repetition reminder
   recallpro <title words>       one-shot capture, learned today
   recallpro <title> --on DATE   backdate (YYYY-MM-DD, 'yesterday', or 'today')
 
-  recallpro due [--full]        items due today (--full shows subpoints)
-  recallpro ls                  all items with rung and next due date
+  recallpro ls [--due] [--full] all items (--due: only due today; --full: subpoints)
   recallpro edit <id|text>      edit an item's title/subpoints in the editor
-  recallpro delete <id…|text>   permanently delete item(s) — several ids allowed
+  recallpro del <id…|text>      permanently delete item(s) — several ids allowed
   recallpro setup               Google OAuth + task list + launchd install
   recallpro status              daemon and sync health
   recallpro sync                run a full sync cycle right now
@@ -42,13 +41,11 @@ def main(argv: list[str] | None = None) -> int:
     if cmd in ("help", "-h", "--help"):
         print(USAGE, end="")
         return 0
-    if cmd == "due":
-        return cmd_due(argv[1:])
     if cmd == "ls":
-        return cmd_list()
+        return cmd_list(argv[1:])
     if cmd == "edit":
         return cmd_edit(argv[1:])
-    if cmd == "delete":
+    if cmd == "del":
         return cmd_delete(argv[1:])
     if cmd == "setup":
         from . import setup_cmd
@@ -121,35 +118,28 @@ def cmd_capture(args: list[str]) -> int:
 
 # --- review ----------------------------------------------------------------
 
-def cmd_due(args: list[str]) -> int:
+def cmd_list(args: list[str]) -> int:
+    due_only = "--due" in args
     full = "--full" in args
     conn = db.connect()
     today = date.today()
-    rows = db.due_items(conn, today)
+    rows = db.due_items(conn, today) if due_only else db.list_items(conn)
     if not rows:
-        print("Nothing due today.")
+        print("Nothing due today." if due_only else
+              "No items yet. Run `recallpro` or `recallpro <title>` to capture one.")
         return 0
     for item in rows:
-        overdue = scheduler.overdue_days(date.fromisoformat(item["next_due"]), today)
-        tag = f"{overdue}d overdue" if overdue else "due today"
+        nd = date.fromisoformat(item["next_due"])
+        if due_only:
+            overdue = scheduler.overdue_days(nd, today)
+            tag = f"{overdue}d overdue" if overdue else "due today"
+        else:
+            when = format_day(max(nd, today)) if nd <= today else nd.isoformat()
+            tag = f"next {when:<12}"
         print(f'#{item["id"]:<4} r{item["rung"]:<3} {tag:<12} {item["title"]}')
         if full:
             for depth, text in db.get_subpoints(conn, item["id"]):
                 print(f'{" " * 25}{"  " * depth}- {text}')
-    return 0
-
-
-def cmd_list() -> int:
-    conn = db.connect()
-    rows = db.list_items(conn)
-    if not rows:
-        print("No items yet. Run `recallpro` or `recallpro <title>` to capture one.")
-        return 0
-    today = date.today()
-    for item in rows:
-        nd = date.fromisoformat(item["next_due"])
-        when = format_day(max(nd, today)) if nd <= today else nd.isoformat()
-        print(f'#{item["id"]:<4} r{item["rung"]:<3} next {when:<12} {item["title"]}')
     return 0
 
 
