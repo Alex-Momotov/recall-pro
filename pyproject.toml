@@ -1,0 +1,23 @@
+[project]
+name = "recallpro"
+version = "0.1.0"
+description = "Personal title-only spaced repetition reminder (local daemon + Google Tasks)"
+requires-python = ">=3.10"
+dependencies = [
+    "prompt_toolkit>=3.0",
+    "google-api-python-client>=2.0",
+    "google-auth-oauthlib>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+recallpro = "recallpro.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["recallpro"]

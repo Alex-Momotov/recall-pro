@@ -1,0 +1,2 @@
+[console_scripts]
+recallpro = recallpro.cli:main
