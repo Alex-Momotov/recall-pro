@@ -19,7 +19,7 @@ recallpro — personal spaced repetition reminder
   recallpro <title words>       one-shot capture, learned today
   recallpro <title> --on DATE   backdate (YYYY-MM-DD, 'yesterday', or 'today')
 
-  recallpro ls [--due] [--full] all items (--due: only due today; --full: subpoints)
+  recallpro ls [--due] [--full|-f] all items (--due: only due today; --full/-f: subpoints)
   recallpro edit <id|text>      edit an item's title/subpoints in the editor
   recallpro del <id…|text>      permanently delete item(s) — several ids allowed
   recallpro setup               Google OAuth + task list + launchd install
@@ -120,7 +120,7 @@ def cmd_capture(args: list[str]) -> int:
 
 def cmd_list(args: list[str]) -> int:
     due_only = "--due" in args
-    full = "--full" in args
+    full = "--full" in args or "-f" in args
     conn = db.connect()
     today = date.today()
     rows = db.due_items(conn, today) if due_only else db.list_items(conn)
